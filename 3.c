@@ -12,7 +12,7 @@
 GtkWidget *window, *darea;
 int windowWidth = 500, windowHeight = 500;
 double x=15, y=1;
-double dt = 1;
+double dt = 0.01;
 double posX[100] = {0};
 double posY[100] = {0};
 double velX[100] = {0};
@@ -29,12 +29,12 @@ int draw(GtkWidget *widget, cairo_t *cr);
 
   double timeInterval;
   int gTimerID = 0;
-#define eps 1e-3
+#define eps 1e-3*/
 
 double distance(double x1, double y1, double x2, double y2) { // get two points in 2D and return their distance
 return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 }
-
+/*
 void cueMove(GtkWidget *widget, GdkEventMotion *event, int *number) { // function that call when mouse moved after clicking on the ball that number is number and before releasing the mouse
 printf("!!!!!!!!!!!    %d\n",*number);
 printf("Cue Move : %lf %lf \n",event->x, event->y);
@@ -83,7 +83,7 @@ printf("Mouse Moved : %f %f\n", event->x, event->y);
 int draw(GtkWidget *widget, cairo_t *cr) {
 	// widget = A widget that draw signal happened for it (darea)
 	// cr = An object that use for draw something on drawing area
-	printf("DRAWWWWW\n");
+	//printf("DRAWWWWW\n");
 	//	cairo_set_source_rgb(cr, 0, 1, 0);	// Set color of rectangle
 	//	cairo_rectangle(cr, 0, 0, windowWidth, windowHeight);	// Set rectangle in cr
 	//	cairo_fill(cr);	// Draw rectangle in drawing area
@@ -98,10 +98,18 @@ int draw(GtkWidget *widget, cairo_t *cr) {
 	{
 		int i;
 		for(i = 0 ; i < n ; i++){
+			/*
 			cairo_surface_t *image = cairo_image_surface_create_from_png("ball.png"); 
 			cairo_set_source_surface(cr, image, posX[i] - 15, posY[i] - 15);	
 			cairo_paint(cr); // paint image on drawing area
-			cairo_surface_destroy(image);	// destroy image that creates before
+			cairo_surface_destroy(image);	// destroy image that creates before*/
+			cairo_surface_t *image = cairo_image_surface_create_from_png("ball.png");
+			cairo_translate(cr, posX[i] - 15 , posY[i] - 15);
+			cairo_rotate(cr, 1 + atan(velY[i] / velX[i]));
+			cairo_set_source_surface(cr, image, 0, 0);
+			cairo_rotate(cr, -1 -atan(velY[i] / velX[i]));
+			cairo_translate(cr, -posX[i] + 15 , -posY[i] + 15);
+			cairo_paint(cr);
 		}
 	}
 	return 0;	// tell drawing area that drawing was successful
@@ -116,11 +124,16 @@ void draw2(){
 		y++;
 		gtk_widget_queue_draw(darea);
 	}*/
-	int i;
+	int i,j;
 	for(i = 0 ; i < n ; i++){
 		posX[i] += velX[i] * dt;	
 		posY[i] += velY[i] * dt;	
 	}	
+	for(i = 0 ; i < n ; i++)
+		for(j = i+1 ; j< n ; j++){
+			if(distance(posX[i],posY[i],posX[j],posY[j])<30)
+				printf("game over  \n");
+		}
 	gtk_widget_queue_draw(darea);
 
 
@@ -129,8 +142,8 @@ void draw2(){
 void addRandom(){
 	posX[n] = 0;
 	posY[n] = rand()  % windowHeight;
-	velX[n] = 10;
-	velY[n] = 0;
+	velY[n] = rand() % 40 - 20;
+	velX[n] = sqrt(20*20 - velX[n]*velX[n]);
 	n ++;
 
 }
