@@ -17,6 +17,8 @@ double posX[100] = {0};
 double posY[100] = {0};
 double velX[100] = {0};
 double velY[100] = {0};
+double picX = 30;
+double picY = 30;
 int gameRunning = 1;
 int n;
 int p=0;
@@ -107,12 +109,17 @@ int draw(GtkWidget *widget, cairo_t *cr) {
 			cairo_surface_destroy(image);	// destroy image that creates before*/
 			cairo_surface_t *image = cairo_image_surface_create_from_png("ball.png");
 			cairo_translate(cr, posX[i] , posY[i]);
-			cairo_rotate(cr, 1 + atan(velY[i] / velX[i]));
-			cairo_set_source_surface(cr, image, -15 , -15);
-			cairo_rotate(cr, -1 -atan(velY[i] / velX[i]));
-			cairo_translate(cr, -posX[i] , -posY[i]);
-			printf("%d %lf %lf\n", i, posX[i], posY[i]);
+			cairo_rotate(cr, 3.14/4 + atan(velY[i] / velX[i]));
+
+			cairo_set_source_surface(cr, image, -picX / 2 , -picY / 2);
 			cairo_paint(cr);
+
+			cairo_set_source_rgb(cr, 0.0, 0.2, 0);
+			cairo_arc(cr, 0, 0, 21, 0, 2 * M_PI);
+			cairo_stroke(cr);
+
+			cairo_rotate(cr, -3.14/4 -atan(velY[i] / velX[i]));
+			cairo_translate(cr, -posX[i] , -posY[i]);
 		}
 	}
 	return 0;	// tell drawing area that drawing was successful
@@ -135,7 +142,7 @@ void draw2(){
 		}	
 		for(i = 0 ; i < n ; i++)
 			for(j = i+1 ; j< n ; j++){
-				if(distance(posX[i],posY[i],posX[j],posY[j])<30){
+				if(distance(posX[i],posY[i],posX[j],posY[j])<42){
 					gameRunning = 0;
 					printf("game over  %d %d\n", i, j);
 				}
@@ -191,19 +198,16 @@ int main(int argc, char** argv) {
 			G_CALLBACK(draw2), NULL);
 
 	// Run draw function when drawing area want to draw
+
 	g_signal_connect(G_OBJECT(darea), "draw", G_CALLBACK(draw), NULL);
 
 	// Run mouseMove function when mouse moved
 	//	g_signal_connect(G_OBJECT(window), "motion-notify-event",
 	//			G_CALLBACK (mouseMove), NULL);
+	
 	g_timeout_add(10, (GSourceFunc) draw2,NULL);
 	g_timeout_add(1000, (GSourceFunc) addRandom,NULL);
-/*	n = 1;
-	posX[0] = 20;
-	posY[0] = 20;
-	velX[0] = 10;
-	velY[0] = 10;
-*/
+
 	gtk_widget_set_app_paintable(window, TRUE);
 
 	gtk_widget_show_all(window); // Show window
