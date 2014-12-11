@@ -17,6 +17,7 @@ double posX[100] = {0};
 double posY[100] = {0};
 double velX[100] = {0};
 double velY[100] = {0};
+int gameRunning = 1;
 int n;
 int p=0;
 void draw2();
@@ -31,6 +32,7 @@ int draw(GtkWidget *widget, cairo_t *cr);
   int gTimerID = 0;
 #define eps 1e-3*/
 
+void exitGame();
 double distance(double x1, double y1, double x2, double y2) { // get two points in 2D and return their distance
 return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 }
@@ -104,11 +106,12 @@ int draw(GtkWidget *widget, cairo_t *cr) {
 			cairo_paint(cr); // paint image on drawing area
 			cairo_surface_destroy(image);	// destroy image that creates before*/
 			cairo_surface_t *image = cairo_image_surface_create_from_png("ball.png");
-			cairo_translate(cr, posX[i] - 15 , posY[i] - 15);
+			cairo_translate(cr, posX[i] , posY[i]);
 			cairo_rotate(cr, 1 + atan(velY[i] / velX[i]));
-			cairo_set_source_surface(cr, image, 0, 0);
+			cairo_set_source_surface(cr, image, -15 , -15);
 			cairo_rotate(cr, -1 -atan(velY[i] / velX[i]));
-			cairo_translate(cr, -posX[i] + 15 , -posY[i] + 15);
+			cairo_translate(cr, -posX[i] , -posY[i]);
+			printf("%d %lf %lf\n", i, posX[i], posY[i]);
 			cairo_paint(cr);
 		}
 	}
@@ -124,31 +127,42 @@ void draw2(){
 		y++;
 		gtk_widget_queue_draw(darea);
 	}*/
-	int i,j;
-	for(i = 0 ; i < n ; i++){
-		posX[i] += velX[i] * dt;	
-		posY[i] += velY[i] * dt;	
-	}	
-	for(i = 0 ; i < n ; i++)
-		for(j = i+1 ; j< n ; j++){
-			if(distance(posX[i],posY[i],posX[j],posY[j])<30)
-				printf("game over  \n");
-		}
+	if(gameRunning){
+		int i,j;
+		for(i = 0 ; i < n ; i++){
+			posX[i] += velX[i] * dt;	
+			posY[i] += velY[i] * dt;	
+		}	
+		for(i = 0 ; i < n ; i++)
+			for(j = i+1 ; j< n ; j++){
+				if(distance(posX[i],posY[i],posX[j],posY[j])<30){
+					gameRunning = 0;
+					printf("game over  %d %d\n", i, j);
+				}
+			}
+	}
 	gtk_widget_queue_draw(darea);
 
 
 }
 
 void addRandom(){
-	posX[n] = 0;
-	posY[n] = rand()  % windowHeight;
-	velY[n] = rand() % 40 - 20;
-	velX[n] = sqrt(20*20 - velX[n]*velX[n]);
-	n ++;
+	if(gameRunning){
+		posX[n] = 0;
+		posY[n] = rand()  % windowHeight;
+		velY[n] = rand() % 40 - 20;
+		velX[n] = sqrt(20*20 - velX[n]*velX[n]);
+		n ++;
+	}
 
+}
+
+void exitGame(){
+	gtk_main_quit();
 }
 int main(int argc, char** argv) {
 	setbuf(stdout, NULL);		// Set buffer
+	srand(time(NULL));
 
 	gtk_init(&argc, &argv);		// Tell compiler We have to use gtk
 
@@ -169,7 +183,7 @@ int main(int argc, char** argv) {
 	//	gtk_widget_add_events(window, GDK_POINTER_MOTION_MASK);	// Mouse Move
 
 	// Run gtk_main_quit when window destroyed
-	g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit),
+	g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(exitGame),
 			NULL);
 
 	// Run screenClick when press on the window
